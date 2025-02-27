@@ -1,0 +1,70 @@
+
+// 示例1：分步实现配置继承
+{
+    "instruction": "第一步：创建基础销售订单表单配置",
+    "input": "",
+    "output": "<?xml version=\"1.0\"?>\n<Form Key=\"SD_OrderBase\" Abstract=\"true\">\n  <DataSource RefObjectKey=\"SD_SalesOrder\"/>\n  <OperationCollection>\n    <Operation Key=\"BaseSave\" Caption=\"保存\"/>\n  </OperationCollection>\n</Form>"
+  }
+  
+  {
+    "instruction": "第二步：基于基础配置创建特殊订单表单",
+    "input": "需要增加价格审批字段",
+    "output": "<?xml version=\"1.0\"?>\n<Form Key=\"SD_SpecialOrder\" ParentKey=\"SD_OrderBase\">\n  <Body>\n    <GridLayoutPanel>\n      <Label Key=\"lblApproval\" Caption=\"价格审批\"/>\n      <Dict Key=\"ApprovalFlag\" ItemKey=\"ApprovalType\"/>\n    </GridLayoutPanel>\n  </Body>\n</Form>"
+  }
+  
+  // 示例2：错误修复对话流
+  {
+    "instruction": "帮我检查这段采购订单代码的问题",
+    "input": "public class PurchaseOrder {\n  public void save() {\n    System.out.println(\"Saved!\");\n  }\n}",
+    "output": "问题反馈：\n1. 未继承EntityContextAction\n2. 直接使用System.out违反日志规范\n3. 缺少模块标识包路径"
+  }
+  
+  {
+    "instruction": "请根据反馈修改代码",
+    "input": "",
+    "output": "package com.company.erp.mm.purchase.formula;\n\npublic class PurchaseOrderFormula extends EntityContextAction {\n  private static final Logger logger = LoggerFactory.getLogger(PurchaseOrderFormula.class);\n  \n  public void save() throws Throwable {\n    logger.info(\"保存采购订单\");\n  }\n}"
+  }
+
+  // OpenAI Format
+{"messages":[{"role":"user","content":"我们需要开发采购订单的审批流程，第一步应该怎么做？"},{"role":"assistant","content":"根据规范第8.1节，请先创建状态管理Formula类框架：\n```java\npublic class POApprovalFormula extends EntityContextAction {\n    private static final Logger logger = LoggerFactory.getLogger(POApprovalFormula.class);\n    \n    public POApprovalFormula(IMidContext context) throws Throwable {\n        super(context);\n    }\n}"}]}
+
+{"messages":[{"role":"user","content":"采购订单需要增加二级审批逻辑，如何扩展状态机？"},{"role":"assistant","content":"在POApprovalFormula中扩展方法：\n```java\npublic void secondApprove(MM_PurchaseOrder order) throws Throwable {\n    validateApprovalLevel(order);\n    StatusFormula status = new StatusFormula(getMidContext());\n    status.changeStatus(true, \"MM_PurchaseOrder\", \"SECOND_APPROVE\", \n        order.getOID(), 4L, \"二级审批通过\");\n}\n\nprivate void validateApprovalLevel(MM_PurchaseOrder order) throws Throwable {\n    if (order.getAmount().compareTo(new BigDecimal(\"500000\")) < 0) {\n        throw new Throwable(\"未达到二级审批金额门槛\");\n    }\n}"}]}
+
+{"messages":[{"role":"user","content":"这个状态变更方法报空指针异常"},{"role":"assistant","content":"请检查：\n1. 是否通过ContextActionRegistry正确注册Formula类\n2. 调用前是否初始化MidContext\n3. 添加空值检查：\n```java\npublic void secondApprove(MM_PurchaseOrder order) throws Throwable {\n    if (order == null) {\n        throw new Throwable(\"订单对象不能为空\");\n    }\n    // 原有逻辑...\n}"}]}
+
+{"messages":[{"role":"user","content":"如何为采购订单配置审批流程图？"},{"role":"assistant","content":"在erp-solution-all中创建审批配置：\n```xml\n<ProcessConfig Key=\"MM_PO_ApprovalFlow\">\n    <Step Sequence=\"1\" Role=\"采购主管\" Status=\"3\"/>\n    <Step Sequence=\"2\" Role=\"财务总监\" Status=\"4\" AmountThreshold=\"500000\"/>\n</ProcessConfig>"}]}
+
+{"messages":[{"role":"user","content":"采购订单明细的金额计算有问题"},{"role":"assistant","content":"请在PurchaseOrderFormula补充验证逻辑：\n```java\nprivate void validateDetails(MM_PurchaseOrder order) throws Throwable {\n    BigDecimal total = BigDecimal.ZERO;\n    for (PurchaseOrderDtl dtl : order.getDetails()) {\n        if (dtl.getPrice() == null || dtl.getQuantity() == null) {\n            throw new Throwable(\"明细价格和数量不能为空\");\n        }\n        total = total.add(dtl.getPrice().multiply(dtl.getQuantity()));\n    }\n    if (total.compareTo(order.getTotalAmount()) != 0) {\n        throw new Throwable(\"明细合计与总金额不一致\");\n    }\n}"}]}
+
+{"messages":[{"role":"user","content":"为什么我的采购订单保存后没有生成单据编号？"},{"role":"assistant","content":"请在save方法中添加编号生成逻辑：\n```java\npublic void save(MM_PurchaseOrder order) throws Throwable {\n    if (order.getDocumentNumber() == null) {\n        String docNo = DocumentFunction.generateDocumentNumber(\n            getMidContext(), \"MM\", \"PO\");\n        order.setDocumentNumber(docNo);\n    }\n    // 后续保存逻辑...\n}"}]}
+
+{"messages":[{"role":"user","content":"如何实现采购订单与财务模块的集成？"},{"role":"assistant","content":"1. 在基础层定义接口：\n```java\npublic interface FI_POIntegration {\n    void createPrepayment(MM_PurchaseOrder po) throws Throwable;\n}\n```\n2. 业务层实现：\n```java\npublic void linkToFinance(MM_PurchaseOrder po) throws Throwable {\n    FI_POIntegration service = getContext().getService(FI_POIntegration.class);\n    service.createPrepayment(po);\n}"}]}
+
+{"messages":[{"role":"user","content":"采购订单取消时报状态验证错误"},{"role":"assistant","content":"检查状态变更前验证逻辑：\n```java\nprivate void validateCancel(MM_PurchaseOrder po) throws Throwable {\n    if (po.getStatus() != 1 && po.getStatus() != 3) {\n        throw new Throwable(\"只有新建或驳回状态的订单可取消\");\n    }\n    if (po.getDetails().stream().anyMatch(d -> d.getReceivedQty().signum() > 0)) {\n        throw new Throwable(\"存在已收货明细不可取消\");\n    }\n}"}]}
+
+{"messages":[{"role":"user","content":"如何添加采购订单的字段级权限控制？"},{"role":"assistant","content":"在配置层添加字段权限配置：\n```xml\n<FieldSecurity ObjectKey=\"MM_PurchaseOrder\">\n    <Field Key=\"ContractAmount\" Roles=\"采购主管,财务总监\"/>\n    <Field Key=\"SupplierInfo\" Roles=\"采购主管\" />\n</FieldSecurity>"}]}
+
+{"messages":[{"role":"user","content":"采购订单打印模板需要显示供应商地址"},{"role":"assistant","content":"1. 在DataObject扩展字段：\n```xml\n<Table Key=\"EMM_PurchaseOrderHead\">\n    <Column Key=\"SupplierAddress\" DataType=\"Varchar\" Length=\"200\"/>\n</Table>\n```\n2. 在Form配置中添加控件：\n```xml\n<Label Key=\"lblAddress\" Caption=\"供应商地址\"/>\n<TextEditor Key=\"SupplierAddress\" />"}]}
+
+{"messages":[{"role":"user","content":"采购订单历史版本查询应该怎么做？"},{"role":"assistant","content":"1. 实体类添加版本字段：\n```java\npublic static final String Version = \"Version\";\nprivate Integer version;\n```\n2. 查询时使用版本参数：\n```java\npublic MM_PurchaseOrder getHistoricalVersion(Long oid, Integer version) {\n    return repository.findByOidAndVersion(oid, version);\n}"}]}
+
+{"messages":[{"role":"user","content":"批量导入采购订单时如何优化性能？"},{"role":"assistant","content":"实现批处理优化：\n```java\npublic void batchImport(List<MM_PurchaseOrder> orders) throws Throwable {\n    context.beginBatch();\n    try {\n        orders.forEach(order -> {\n            generateDocumentNumber(order);\n            context.saveObject(order);\n        });\n        context.commit();\n    } catch (Exception e) {\n        context.rollback();\n        throw e;\n    }\n}"}]}
+
+{"messages":[{"role":"user","content":"如何为采购订单添加附件功能？"},{"role":"assistant","content":"1. 创建附件实体：\n```java\npublic class POAttachment extends AbstractBillEntity {\n    public static final String POID = \"POID\";\n    public static final String FileName = \"FileName\";\n}\n```\n2. 在Formula中添加关联逻辑：\n```java\npublic void addAttachment(MM_PurchaseOrder po, POAttachment attachment) {\n    attachment.setPOID(po.getOID());\n    context.saveObject(attachment);\n}"}]}
+
+{"messages":[{"role":"user","content":"采购订单的审批流需要条件分支怎么办？"},{"role":"assistant","content":"扩展流程配置：\n```xml\n<ProcessConfig Key=\"MM_PO_ComplexFlow\">\n    <Step Sequence=\"1\" Role=\"采购主管\">\n        <Condition Expression=\"amount <= 100000\" TargetStep=\"3\"/>\n    </Step>\n    <Step Sequence=\"2\" Role=\"财务总监\" AmountThreshold=\"100000\"/>\n    <Step Sequence=\"3\" Role=\"归档\"/>\n</ProcessConfig>"}]}
+
+{"messages":[{"role":"user","content":"如何实现采购订单的撤回功能？"},{"role":"assistant","content":"在StatusFormula中添加撤回逻辑：\n```java\npublic void recallApproval(MM_PurchaseOrder po) throws Throwable {\n    if (po.getStatus() != 3) {\n        throw new Throwable(\"只有已审批状态可撤回\");\n    }\n    statusFormula.changeStatus(true, \"MM_PurchaseOrder\", \"RECALL\",\n        po.getOID(), 2L, \"审批撤回\");\n}"}]}
+
+{"messages":[{"role":"user","content":"采购订单的移动端适配需要调整哪些配置？"},{"role":"assistant","content":"在solution层添加移动端配置：\n```xml\n<FormFactor FormKey=\"MM_PurchaseOrder\" DeviceType=\"Mobile\">\n    <HiddenFields>\n        <Field>InternalComments</Field>\n    </HiddenFields>\n    <LayoutTemplate>mobile_po_template</LayoutTemplate>\n</FormFactor>"}]}
+
+{"messages":[{"role":"user","content":"如何监控采购订单的处理时长？"},{"role":"assistant","content":"在基础层添加监控切面：\n```java\n@Aspect\npublic class POProcessingMonitor {\n    @Around(\"execution(* com.company.erp.mm..formula.*.save(..))\")\n    public Object logProcessingTime(ProceedingJoinPoint joinPoint) throws Throwable {\n        long start = System.currentTimeMillis();\n        Object result = joinPoint.proceed();\n        logger.info(\"采购订单处理耗时：{}ms\", System.currentTimeMillis() - start);\n        return result;\n    }\n}"}]}
+
+{"messages":[{"role":"user","content":"采购订单的关联查询性能低下如何优化？"},{"role":"assistant","content":"实施以下优化措施：\n1. 添加数据库索引：\n```sql\nCREATE INDEX IDX_PO_SUPPLIER ON EMM_PurchaseOrderHead(VendorID);\n```\n2. 使用缓存：\n```java\n@Cacheable(value = \"EGMM_Supplier\", key = \"#vendorId\")\npublic Supplier getSupplier(Long vendorId) {\n    return repository.findById(vendorId);\n}\n```"}]}
+
+{"messages":[{"role":"user","content":"如何实现采购订单的版本对比功能？"},{"role":"assistant","content":"1. 创建版本对比工具类：\n```java\npublic class POVersionComparator {\n    public Map<String, Object> compareVersions(MM_PurchaseOrder v1, MM_PurchaseOrder v2) {\n        return EntityComparator.compare(v1, v2, \n            Arrays.asList(\"DocumentNumber\", \"TotalAmount\"));\n    }\n}\n```\n2. 在Formula中集成：\n```java\npublic void showVersionDiff(Long oid) throws Throwable {\n    MM_PurchaseOrder current = getCurrentVersion(oid);\n    MM_PurchaseOrder historical = getHistoricalVersion(oid, current.getVersion()-1);\n    Map<String, Object> diffs = comparator.compareVersions(current, historical);\n    // 显示差异逻辑...\n}"}]}
+
+{"messages":[{"role":"user","content":"采购订单的审批通知应该怎样实现？"},{"role":"assistant","content":"使用事件驱动架构：\n1. 定义审批事件：\n```java\npublic class POApprovedEvent {\n    private Long poNumber;\n    private String approver;\n}\n```\n2. 在状态变更时发布事件：\n```java\npublic void approve(MM_PurchaseOrder po) throws Throwable {\n    // 原有审批逻辑...\n    eventPublisher.publish(new POApprovedEvent(po.getDocumentNumber(), currentUser));\n}\n```\n3. 实现邮件通知监听器：\n```java\n@EventListener\npublic void handleApprovalEvent(POApprovedEvent event) {\n    emailService.sendApprovalNotice(event.getPoNumber(), event.getApprover());\n}"}]}
+
+{"messages":[{"role":"user","content":"如何保证采购订单数据迁移的完整性？"},{"role":"assistant","content":"实施数据迁移校验流程：\n```java\npublic void validateMigration(Long batchId) throws Throwable {\n    List<MM_PurchaseOrder> source = legacySystem.getOrders(batchId);\n    List<MM_PurchaseOrder> target = repository.findByBatchId(batchId);\n    \n    if (source.size() != target.size()) {\n        throw new Throwable(\"迁移数量不一致\");\n    }\n    \n    source.forEach(s -> {\n        MM_PurchaseOrder t = target.stream()\n            .filter(item -> item.getLegacyId().equals(s.getId()))\n            .findFirst().orElseThrow();\n        if (!s.getTotalAmount().equals(t.getTotalAmount())) {\n            throw new DataInconsistencyException(\"金额不一致：\" + s.getId());\n        }\n    });\n}"}]}
+//ShareGPT format

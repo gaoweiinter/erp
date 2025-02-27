@@ -1,0 +1,600 @@
+[
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "我们需要开发采购订单的审批流程，第一步应该怎么做？"
+        },
+        {
+          "from": "assistant",
+          "value": "根据规范第8.1节，请先创建状态管理Formula类框架：\n```java\npublic class POApprovalFormula extends EntityContextAction {\n    private static final Logger logger = LoggerFactory.getLogger(POApprovalFormula.class);\n    \n    public POApprovalFormula(IMidContext context) throws Throwable {\n        super(context);\n    }\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单需要增加二级审批逻辑，如何扩展状态机？"
+        },
+        {
+          "from": "assistant",
+          "value": "在POApprovalFormula中扩展方法：\n```java\npublic void secondApprove(MM_PurchaseOrder order) throws Throwable {\n    validateApprovalLevel(order);\n    StatusFormula status = new StatusFormula(getMidContext());\n    status.changeStatus(true, \"MM_PurchaseOrder\", \"SECOND_APPROVE\", \n        order.getOID(), 4L, \"二级审批通过\");\n}\n\nprivate void validateApprovalLevel(MM_PurchaseOrder order) throws Throwable {\n    if (order.getAmount().compareTo(new BigDecimal(\"500000\")) < 0) {\n        throw new Throwable(\"未达到二级审批金额门槛\");\n    }\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "这个状态变更方法报空指针异常"
+        },
+        {
+          "from": "assistant",
+          "value": "请检查：\n1. 是否通过ContextActionRegistry正确注册Formula类\n2. 调用前是否初始化MidContext\n3. 添加空值检查：\n```java\npublic void secondApprove(MM_PurchaseOrder order) throws Throwable {\n    if (order == null) {\n        throw new Throwable(\"订单对象不能为空\");\n    }\n    // 原有逻辑...\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "如何为采购订单配置审批流程图？"
+        },
+        {
+          "from": "assistant",
+          "value": "在erp-solution-all中创建审批配置：\n```xml\n<ProcessConfig Key=\"MM_PO_ApprovalFlow\">\n    <Step Sequence=\"1\" Role=\"采购主管\" Status=\"3\"/>\n    <Step Sequence=\"2\" Role=\"财务总监\" Status=\"4\" AmountThreshold=\"500000\"/>\n</ProcessConfig>```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单明细的金额计算有问题"
+        },
+        {
+          "from": "assistant",
+          "value": "请在PurchaseOrderFormula补充验证逻辑：\n```java\nprivate void validateDetails(MM_PurchaseOrder order) throws Throwable {\n    BigDecimal total = BigDecimal.ZERO;\n    for (PurchaseOrderDtl dtl : order.getDetails()) {\n        if (dtl.getPrice() == null || dtl.getQuantity() == null) {\n            throw new Throwable(\"明细价格和数量不能为空\");\n        }\n        total = total.add(dtl.getPrice().multiply(dtl.getQuantity()));\n    }\n    if (total.compareTo(order.getTotalAmount()) != 0) {\n        throw new Throwable(\"明细合计与总金额不一致\");\n    }\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "为什么我的采购订单保存后没有生成单据编号？"
+        },
+        {
+          "from": "assistant",
+          "value": "请在save方法中添加编号生成逻辑：\n```java\npublic void save(MM_PurchaseOrder order) throws Throwable {\n    if (order.getDocumentNumber() == null) {\n        String docNo = DocumentFunction.generateDocumentNumber(\n            getMidContext(), \"MM\", \"PO\");\n        order.setDocumentNumber(docNo);\n    }\n    // 后续保存逻辑...\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "如何实现采购订单与财务模块的集成？"
+        },
+        {
+          "from": "assistant",
+          "value": "1. 在基础层定义接口：\n```java\npublic interface FI_POIntegration {\n    void createPrepayment(MM_PurchaseOrder po) throws Throwable;\n}```\n2. 业务层实现：\n```java\npublic void linkToFinance(MM_PurchaseOrder po) throws Throwable {\n    FI_POIntegration service = getContext().getService(FI_POIntegration.class);\n    service.createPrepayment(po);\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单取消时报状态验证错误"
+        },
+        {
+          "from": "assistant",
+          "value": "检查状态变更前验证逻辑：\n```java\nprivate void validateCancel(MM_PurchaseOrder po) throws Throwable {\n    if (po.getStatus() != 1 && po.getStatus() != 3) {\n        throw new Throwable(\"只有新建或驳回状态的订单可取消\");\n    }\n    if (po.getDetails().stream().anyMatch(d -> d.getReceivedQty().signum() > 0)) {\n        throw new Throwable(\"存在已收货明细不可取消\");\n    }\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "如何添加采购订单的字段级权限控制？"
+        },
+        {
+          "from": "assistant",
+          "value": "在配置层添加字段权限配置：\n```xml\n<FieldSecurity ObjectKey=\"MM_PurchaseOrder\">\n    <Field Key=\"ContractAmount\" Roles=\"采购主管,财务总监\"/>\n    <Field Key=\"SupplierInfo\" Roles=\"采购主管\" />\n</FieldSecurity>```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单打印模板需要显示供应商地址"
+        },
+        {
+          "from": "assistant",
+          "value": "1. 在DataObject扩展字段：\n```xml\n<Table Key=\"EMM_PurchaseOrderHead\">\n    <Column Key=\"SupplierAddress\" DataType=\"Varchar\" Length=\"200\"/>\n</Table>```\n2. 在Form配置中添加控件：\n```xml\n<Label Key=\"lblAddress\" Caption=\"供应商地址\"/>\n<TextEditor Key=\"SupplierAddress\" />```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单历史版本查询应该怎么做？"
+        },
+        {
+          "from": "assistant",
+          "value": "1. 实体类添加版本字段：\n```java\npublic static final String Version = \"Version\";\nprivate Integer version;```\n2. 查询时使用版本参数：\n```java\npublic MM_PurchaseOrder getHistoricalVersion(Long oid, Integer version) {\n    return repository.findByOidAndVersion(oid, version);\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "批量导入采购订单时如何优化性能？"
+        },
+        {
+          "from": "assistant",
+          "value": "实现批处理优化：\n```java\npublic void batchImport(List<MM_PurchaseOrder> orders) throws Throwable {\n    context.beginBatch();\n    try {\n        orders.forEach(order -> {\n            generateDocumentNumber(order);\n            context.saveObject(order);\n        });\n        context.commit();\n    } catch (Exception e) {\n        context.rollback();\n        throw e;\n    }\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "如何为采购订单添加附件功能？"
+        },
+        {
+          "from": "assistant",
+          "value": "1. 创建附件实体：\n```java\npublic class POAttachment extends AbstractBillEntity {\n    public static final String POID = \"POID\";\n    public static final String FileName = \"FileName\";\n}```\n2. 在Formula中添加关联逻辑：\n```java\npublic void addAttachment(MM_PurchaseOrder po, POAttachment attachment) {\n    attachment.setPOID(po.getOID());\n    context.saveObject(attachment);\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单的审批流需要条件分支怎么办？"
+        },
+        {
+          "from": "assistant",
+          "value": "扩展流程配置：\n```xml\n<ProcessConfig Key=\"MM_PO_ComplexFlow\">\n    <Step Sequence=\"1\" Role=\"采购主管\">\n        <Condition Expression=\"amount <= 100000\" TargetStep=\"3\"/>\n    </Step>\n    <Step Sequence=\"2\" Role=\"财务总监\" AmountThreshold=\"100000\"/>\n    <Step Sequence=\"3\" Role=\"归档\"/>\n</ProcessConfig>```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "如何实现采购订单的撤回功能？"
+        },
+        {
+          "from": "assistant",
+          "value": "在StatusFormula中添加撤回逻辑：\n```java\npublic void recallApproval(MM_PurchaseOrder po) throws Throwable {\n    if (po.getStatus() != 3) {\n        throw new Throwable(\"只有已审批状态可撤回\");\n    }\n    statusFormula.changeStatus(true, \"MM_PurchaseOrder\", \"RECALL\",\n        po.getOID(), 2L, \"审批撤回\");\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单的移动端适配需要调整哪些配置？"
+        },
+        {
+          "from": "assistant",
+          "value": "在solution层添加移动端配置：\n```xml\n<FormFactor FormKey=\"MM_PurchaseOrder\" DeviceType=\"Mobile\">\n    <HiddenFields>\n        <Field>InternalComments</Field>\n    </HiddenFields>\n    <LayoutTemplate>mobile_po_template</LayoutTemplate>\n</FormFactor>```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "如何监控采购订单的处理时长？"
+        },
+        {
+          "from": "assistant",
+          "value": "在基础层添加监控切面：\n```java\n@Aspect\npublic class POProcessingMonitor {\n    @Around(\"execution(* com.company.erp.mm..formula.*.save(..))\")\n    public Object logProcessingTime(ProceedingJoinPoint joinPoint) throws Throwable {\n        long start = System.currentTimeMillis();\n        Object result = joinPoint.proceed();\n        logger.info(\"采购订单处理耗时：{}ms\", System.currentTimeMillis() - start);\n        return result;\n    }\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单的关联查询性能低下如何优化？"
+        },
+        {
+          "from": "assistant",
+          "value": "实施以下优化措施：\n1. 添加数据库索引：\n```sql\nCREATE INDEX IDX_PO_SUPPLIER ON EMM_PurchaseOrderHead(VendorID);\n```\n2. 使用缓存：\n```java\n@Cacheable(value = \"EGMM_Supplier\", key = \"#vendorId\")\npublic Supplier getSupplier(Long vendorId) {\n    return repository.findById(vendorId);\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "如何实现采购订单的版本对比功能？"
+        },
+        {
+          "from": "assistant",
+          "value": "1. 创建版本对比工具类：\n```java\npublic class POVersionComparator {\n    public Map<String, Object> compareVersions(MM_PurchaseOrder v1, MM_PurchaseOrder v2) {\n        return EntityComparator.compare(v1, v2, \n            Arrays.asList(\"DocumentNumber\", \"TotalAmount\"));\n    }\n}```\n2. 在Formula中集成：\n```java\npublic void showVersionDiff(Long oid) throws Throwable {\n    MM_PurchaseOrder current = getCurrentVersion(oid);\n    MM_PurchaseOrder historical = getHistoricalVersion(oid, current.getVersion()-1);\n    Map<String, Object> diffs = comparator.compareVersions(current, historical);\n    // 显示差异逻辑...\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "采购订单的审批通知应该怎样实现？"
+        },
+        {
+          "from": "assistant",
+          "value": "使用事件驱动架构：\n1. 定义审批事件：\n```java\npublic class POApprovedEvent {\n    private Long poNumber;\n    private String approver;\n}```\n2. 在状态变更时发布事件：\n```java\npublic void approve(MM_PurchaseOrder po) throws Throwable {\n    // 原有审批逻辑...\n    eventPublisher.publish(new POApprovedEvent(po.getDocumentNumber(), currentUser));\n}```\n3. 实现邮件通知监听器：\n```java\n@EventListener\npublic void handleApprovalEvent(POApprovedEvent event) {\n    emailService.sendApprovalNotice(event.getPoNumber(), event.getApprover());\n}```"
+        }
+      ]
+    },
+    {
+      "conversations": [
+        {
+          "from": "user",
+          "value": "如何保证采购订单数据迁移的完整性？"
+        },
+        {
+          "from": "assistant",
+          "value": "实施数据迁移校验流程：\n```java\npublic void validateMigration(Long batchId) throws Throwable {\n    List<MM_PurchaseOrder> source = legacySystem.getOrders(batchId);\n    List<MM_PurchaseOrder> target = repository.findByBatchId(batchId);\n    \n    if (source.size() != target.size()) {\n        throw new Throwable(\"迁移数量不一致\");\n    }\n    \n    source.forEach(s -> {\n        MM_PurchaseOrder t = target.stream()\n            .filter(item -> item.getLegacyId().equals(s.getId()))\n            .findFirst().orElseThrow();\n        if (!s.getTotalAmount().equals(t.getTotalAmount())) {\n            throw new DataInconsistencyException(\"金额不一致：\" + s.getId());\n        }\n    });\n}```"
+        }
+      ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "如何为采购订单头表配置XML数据对象？"
+        },
+        {
+            "from": "assistant",
+            "value": "根据规范11.1节，正确配置如下：\n```xml\n<DataObject Key=\"MM_PurchaseOrder\" Caption=\"采购订单\" PrimaryTableKey=\"EMM_PurchaseOrderHead\">\n  <TableCollection>\n    <Table Key=\"EMM_PurchaseOrderHead\" Caption=\"采购订单头表\">\n      <Column Key=\"OID\" DataType=\"Long\" Caption=\"对象标识\"/>\n      <Column Key=\"DocumentNumber\" DataType=\"Varchar\" Length=\"50\"/>\n    </Table>\n  </TableCollection>\n</DataObject>```\n说明：\n1. 表名使用EMM_前缀\n2. 包含必需的系统字段OID"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "我需要给采购订单增加供应商字段"
+        },
+        {
+            "from": "assistant",
+            "value": "在EMM_PurchaseOrderHead表中添加：\n```xml\n<Column Key=\"VendorID\" DataType=\"Long\" Caption=\"供应商\" Required=\"true\"/>"
+        },
+        {
+            "from": "user",
+            "value": "这个字段应该设置什么校验规则？"
+        },
+        {
+            "from": "assistant",
+            "value": "可添加外键约束：\n```xml\n<Column Key=\"VendorID\" DataType=\"Long\" Caption=\"供应商\">\n  <Reference TableKey=\"D1_Vendor\" ColumnKey=\"OID\"/>\n</Column>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "为什么我的物料明细表配置报错？当前配置：\n```xml\n<Table Key=\"MaterialDetails\">\n  <Column Key=\"Price\" DataType=\"Decimal\"/>\n</Table>```"
+        },
+        {
+            "from": "assistant",
+            "value": "问题诊断：\n1. 表名缺少EGMM_前缀（规范4.1）\n2. 金额字段未指定精度（规范11.1.3）\n修正方案：\n```xml\n<Table Key=\"EGMM_MaterialDtl\" Caption=\"物料明细\">\n  <Column Key=\"Price\" DataType=\"Numeric\" Precision=\"16\" Scale=\"2\"/>\n</Table>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "如何配置采购订单的表单布局？"
+        },
+        {
+            "from": "assistant",
+            "value": "基础表单配置：\n```xml\n<Form Key=\"MM_PurchaseOrder\" FormType=\"Entity\">\n  <DataSource RefObjectKey=\"MM_PurchaseOrder\"/>\n  <Body>\n    <GridLayoutPanel>\n      <TextEditor Key=\"DocumentNumber\" Caption=\"单据编号\"/>\n    </GridLayoutPanel>\n  </Body>\n</Form>```"
+        },
+        {
+            "from": "user",
+            "value": "需要添加供应商下拉选择框"
+        },
+        {
+            "from": "assistant",
+            "value": "添加Dict控件：\n```xml\n<Dict Key=\"VendorID\" Caption=\"供应商\" ItemKey=\"D1_Vendor\">\n  <DataBinding TableKey=\"EMM_PurchaseOrderHead\" ColumnKey=\"VendorID\"/>\n</Dict>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "这个表单配置有什么问题？\n```xml\n<Form Key=\"SD_SalesOrder\">\n  <OperationCollection>\n    <Operation Key=\"Save\" Action=\"saveMethod\"/>\n  </OperationCollection>\n</Form>```"
+        },
+        {
+            "from": "assistant",
+            "value": "主要问题：\n1. 未通过MacroCollection绑定Formula方法（规范11.2.5）\n2. Action属性值不符合命名规范\n修正方案：\n```xml\n<MacroCollection>\n  <Macro Key=\"Macro_Save\">\n    <![CDATA[com.company.erp.sd.formula.SalesOrderFormula.save();]]>\n  </Macro>\n</MacroCollection>\n<Operation Key=\"BillSave\" Caption=\"保存\">\n  <Action><![CDATA[Macro_Save;]]></Action>\n</Operation>```"
+        }
+        ]
+    },
+    
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "如何为采购订单头表配置XML数据对象？"
+        },
+        {
+            "from": "assistant",
+            "value": "根据规范11.1节，正确配置如下：\n```xml\n<DataObject Key=\"MM_PurchaseOrder\" Caption=\"采购订单\" PrimaryTableKey=\"EMM_PurchaseOrderHead\">\n  <TableCollection>\n    <Table Key=\"EMM_PurchaseOrderHead\" Caption=\"采购订单头表\">\n      <Column Key=\"OID\" DataType=\"Long\" Caption=\"对象标识\"/>\n      <Column Key=\"DocumentNumber\" DataType=\"Varchar\" Length=\"50\"/>\n    </Table>\n  </TableCollection>\n</DataObject>```\n说明：\n1. 表名使用EMM_前缀\n2. 包含必需的系统字段OID"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "我需要给采购订单增加供应商字段"
+        },
+        {
+            "from": "assistant",
+            "value": "在EMM_PurchaseOrderHead表中添加：\n```xml\n<Column Key=\"VendorID\" DataType=\"Long\" Caption=\"供应商\" Required=\"true\"/>"
+        },
+        {
+            "from": "user",
+            "value": "这个字段应该设置什么校验规则？"
+        },
+        {
+            "from": "assistant",
+            "value": "可添加外键约束：\n```xml\n<Column Key=\"VendorID\" DataType=\"Long\" Caption=\"供应商\">\n  <Reference TableKey=\"D1_Vendor\" ColumnKey=\"OID\"/>\n</Column>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "为什么我的物料明细表配置报错？当前配置：\n```xml\n<Table Key=\"MaterialDetails\">\n  <Column Key=\"Price\" DataType=\"Decimal\"/>\n</Table>```"
+        },
+        {
+            "from": "assistant",
+            "value": "问题诊断：\n1. 表名缺少EGMM_前缀（规范4.1）\n2. 金额字段未指定精度（规范11.1.3）\n修正方案：\n```xml\n<Table Key=\"EGMM_MaterialDtl\" Caption=\"物料明细\">\n  <Column Key=\"Price\" DataType=\"Numeric\" Precision=\"16\" Scale=\"2\"/>\n</Table>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "如何配置采购订单的表单布局？"
+        },
+        {
+            "from": "assistant",
+            "value": "基础表单配置：\n```xml\n<Form Key=\"MM_PurchaseOrder\" FormType=\"Entity\">\n  <DataSource RefObjectKey=\"MM_PurchaseOrder\"/>\n  <Body>\n    <GridLayoutPanel>\n      <TextEditor Key=\"DocumentNumber\" Caption=\"单据编号\"/>\n    </GridLayoutPanel>\n  </Body>\n</Form>```"
+        },
+        {
+            "from": "user",
+            "value": "需要添加供应商下拉选择框"
+        },
+        {
+            "from": "assistant",
+            "value": "添加Dict控件：\n```xml\n<Dict Key=\"VendorID\" Caption=\"供应商\" ItemKey=\"D1_Vendor\">\n  <DataBinding TableKey=\"EMM_PurchaseOrderHead\" ColumnKey=\"VendorID\"/>\n</Dict>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "这个表单配置有什么问题？\n```xml\n<Form Key=\"SD_SalesOrder\">\n  <OperationCollection>\n    <Operation Key=\"Save\" Action=\"saveMethod\"/>\n  </OperationCollection>\n</Form>```"
+        },
+        {
+            "from": "assistant",
+            "value": "主要问题：\n1. 未通过MacroCollection绑定Formula方法（规范11.2.5）\n2. Action属性值不符合命名规范\n修正方案：\n```xml\n<MacroCollection>\n  <Macro Key=\"Macro_Save\">\n    <![CDATA[com.company.erp.sd.formula.SalesOrderFormula.save();]]>\n  </Macro>\n</MacroCollection>\n<Operation Key=\"BillSave\" Caption=\"保存\">\n  <Action><![CDATA[Macro_Save;]]></Action>\n</Operation>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "如何配置带条件的审批流程？当前配置：\n```xml\n<Step Sequence=\"1\" Role=\"主管审批\"/>"
+        },
+        {
+            "from": "assistant",
+            "value": "需补充条件表达式：\n```xml\n<Step Sequence=\"1\" Role=\"主管审批\">\n  <Condition Expression=\"Amount > 100000\" TargetStep=\"2\"/>\n</Step>\n<Step Sequence=\"2\" Role=\"财务审批\"/>```\n（规范11.4.2）"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "移动端表单适配应该怎么配置？"
+        },
+        {
+            "from": "assistant",
+            "value": "添加FormFactor配置：\n```xml\n<FormFactor FormKey=\"MM_PurchaseOrder\" DeviceType=\"Mobile\">\n  <HiddenFields>\n    <Field>InternalComments</Field>\n  </HiddenFields>\n  <LayoutTemplate>mobile_compact</LayoutTemplate>\n</FormFactor>```\n（规范11.3.4）"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "数据对象版本控制如何实现？当前配置缺少版本字段"
+        },
+        {
+            "from": "assistant",
+            "value": "需添加版本系统字段：\n```xml\n<Column Key=\"VERID\" DataType=\"Integer\" Caption=\"对象版本\" DefaultValue=\"1\"/>```\n并在保存时自动递增版本号"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "如何设置字段级权限？当前配置：\n```xml\n<Field Key=\"Salary\" Visible=\"true\"/>"
+        },
+        {
+            "from": "assistant",
+            "value": "应使用FieldSecurity配置：\n```xml\n<FieldSecurity ObjectKey=\"HR_Employee\">\n  <Field Key=\"Salary\" Roles=\"HR_Director\" ReadOnly=\"true\"/>\n</FieldSecurity>```\n（规范11.2.3）"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "缓存表配置报错：\n```xml\n<Table Key=\"MaterialCache\">...</Table>```"
+        },
+        {
+            "from": "assistant",
+            "value": "错误：缺少EG前缀（规范4.1）\n修正：\n```xml\n<Table Key=\"EGMM_MaterialCache\">...</Table>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "如何配置打印模板显示Logo？"
+        },
+        {
+            "from": "assistant",
+            "value": "添加Image控件：\n```xml\n<Image Key=\"CompanyLogo\" Source=\"@/resources/logo.png\" Position=\"Header\"/>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "多语言标签应该怎么配置？"
+        },
+        {
+            "from": "assistant",
+            "value": "使用Label资源文件：\n```xml\n<Label Key=\"lblCustomer\" Caption=\"@i18n:customer.label\"/>```\n并在语言包定义键值对"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "表单加载时需要初始化数据，如何配置？"
+        },
+        {
+            "from": "assistant",
+            "value": "使用OnLoad事件：\n```xml\n<OnLoad>\n  <![CDATA[initFormData();]]>\n</OnLoad>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "明细表格列宽怎么调整？当前配置：\n```xml\n<GridColumn Key=\"MaterialName\" Width=\"100%\"/>"
+        },
+        {
+            "from": "assistant",
+            "value": "修正为固定宽度：\n```xml\n<GridColumn Key=\"MaterialName\" Width=\"200px\" AutoSize=\"false\"/>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "审批流程超时如何配置？"
+        },
+        {
+            "from": "assistant",
+            "value": "添加Timeout配置：\n```xml\n<Step Sequence=\"1\" Role=\"审批人\" Timeout=\"72h\" TimeoutAction=\"自动驳回\"/>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "系统字段CreateTime如何自动填充？"
+        },
+        {
+            "from": "assistant",
+            "value": "配置默认值：\n```xml\n<Column Key=\"CreateTime\" DataType=\"DateTime\" DefaultValue=\"$SYSDATE\"/>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "金额字段应该怎么配置舍入规则？"
+        },
+        {
+            "from": "assistant",
+            "value": "添加Rounding配置：\n```xml\n<Column Key=\"Amount\" DataType=\"Numeric\" Precision=\"16\" Scale=\"2\" Rounding=\"HALF_UP\"/>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "物料分类层级配置报错：\n```xml\n<Table Key=\"MaterialClass\" ParentKey=\"Self\"/>"
+        },
+        {
+            "from": "assistant",
+            "value": "应使用树形结构配置：\n```xml\n<Table Key=\"EGMM_MaterialClass\" TreeMode=\"Hierarchy\">\n  <Column Key=\"ParentOID\" DataType=\"Long\"/>\n</Table>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "单位换算规则如何配置？"
+        },
+        {
+            "from": "assistant",
+            "value": "创建换算率表：\n```xml\n<Table Key=\"EGMM_UnitConversion\">\n  <Column Key=\"FromUnit\" DataType=\"Long\"/>\n  <Column Key=\"ToUnit\" DataType=\"Long\"/>\n  <Column Key=\"Rate\" DataType=\"Numeric\" Precision=\"8\" Scale=\"4\"/>\n</Table>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "数据迁移字段映射怎么配置？"
+        },
+        {
+            "from": "assistant",
+            "value": "使用FieldMapping配置：\n```xml\n<MigrationMap Source=\"OldSystem.PONumber\" Target=\"DocumentNumber\"/>\n<MigrationMap Source=\"VendorCode\" Target=\"VendorID\" Converter=\"vendorCodeConverter\"/>```"
+        }
+        ]
+    },
+    {
+        "conversations": [
+        {
+            "from": "user",
+            "value": "为什么我的表单提交后没有触发审批流程？当前配置：\n```xml\n<Operation Key=\"Submit\" Action=\"submit\"/>"
+        },
+        {
+            "from": "assistant",
+            "value": "需绑定状态变更方法：\n```xml\n<Macro Key=\"Macro_Submit\">\n  <![CDATA[com.company.erp.mm.formula.POFormula.submit();]]>\n</Macro>\n<Operation Key=\"Submit\" Caption=\"提交\">\n  <Action><![CDATA[Macro_Submit;]]></Action>\n</Operation>```\n并在Formula中调用StatusFormula"
+        }
+        ]
+    }
+
+  ]

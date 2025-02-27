@@ -1,0 +1,36 @@
+{"id": "MOD-001", "type": "NewFile", "language": "java", "instruction": "在FI模块创建基础实体类BankAccount，要求：\n1. 包路径com.company.erp.fi.entity\n2. 继承AbstractBillEntity\n3. 包含accountNumber字段", "output": "package com.company.erp.fi.entity;\n\npublic class FI_BankAccount extends AbstractBillEntity {\n    public static final String AccountNumber = \"AccountNumber\";\n    \n    public String getAccountNumber() throws Throwable {\n        return value_String(AccountNumber);\n    }\n    \n    public FI_BankAccount setAccountNumber(String value) throws Throwable {\n        setValue(AccountNumber, value);\n        return this;\n    }\n}"}
+
+{"id": "MOD-002", "type": "FIM", "language": "java", "prefix": "package com.company.erp.basis.formula;\n\npublic class BaseFormula ", "suffix": "{\n    protected void validateNotNull(Object obj, String message) throws Throwable {\n        if (obj == null) throw new Throwable(message);\n    }\n}", "middle": "extends EntityContextAction "}
+
+{"id": "MOD-003", "type": "CrossFile", "files": [
+    {"path": "com/company/erp/basis/exception/CoreException.java", "content": "package com.company.erp.basis.exception;\n\npublic class CoreException extends Exception {}"},
+    {"path": "com/company/erp/mm/service/MaterialService.java", "context": "public void validateMaterial() throws ", "completion": "CoreException {\n        // 验证逻辑\n    }"}
+]}
+
+{"id": "MOD-004", "type": "NTP", "language": "java", "context": "package com.company.erp.co.registry;\n\npublic class COContextActionRegistry implements IExtendContextActionRegistry {\n    @Override\n    public Class<?>[] getContextActions() {\n        return new Class<?>[]{\n            ", "completion": "CostAllocationFormula.class,\n            BudgetControlFormula.class\n        };\n    }\n}"}
+
+{"id": "MOD-005", "type": "MultiTurn", "messages": [
+    {"role": "user", "content": "如何在RE模块创建不动产实体类？"},
+    {"role": "assistant", "content": "需满足：\n1. 包路径com.company.erp.re.entity\n2. 包含propertyCode字段\n3. 继承基础实体"},
+    {"role": "user", "content": "public class RealEstate {\n    String propCode;\n}"},
+    {"role": "assistant", "content": "需要修正：\n1. 添加package声明\n2. 字段名规范化为propertyCode\n3. 继承AbstractBillEntity\n完整代码：\npackage com.company.erp.re.entity;\n\npublic class RE_RealEstate extends AbstractBillEntity {\n    public static final String PropertyCode = \"PropertyCode\";\n    // getter/setter..."}
+]}
+
+{"id": "MOD-006", "type": "FIM", "language": "java", "prefix": "package com.company.erp.sd.formula;\n\npublic class OrderStatusFormula extends EntityContextAction {\n    public void approve() throws Throwable {\n        ", "suffix": "\n        updateApprovalHistory();\n    }\n}", "middle": "validateApprover();\n        checkCreditLimit();"}
+
+{"id": "MOD-007", "type": "NewFile", "language": "java", "instruction": "在WM模块创建库存缓存实体类，要求：\n1. 表名前缀EGWM_\n2. 包含materialCode和stockQty字段\n3. 实现缓存更新方法", "output": "package com.company.erp.wm.entity;\n\npublic class EGWM_InventoryCache {\n    public static final String MaterialCode = \"MaterialCode\";\n    public static final String StockQty = \"StockQty\";\n    \n    public void refreshCache() {\n        // 缓存更新逻辑\n    }\n}"}
+
+{"id": "MOD-008", "type": "CrossFile", "files": [
+    {"path": "com/company/erp/hcm/entity/Employee.java", "content": "package com.company.erp.hcm.entity;\n\npublic class HCM_Employee extends AbstractBillEntity {\n    public static final String EmployeeCode = \"EmployeeCode\";\n}"},
+    {"path": "com/company/erp/ps/service/ProjectService.java", "context": "public HCM_Employee getProjectManager() {\n    return employeeMapper.", "completion": "findByCode(project.getManagerCode());\n}"}
+]}
+
+{"id": "MOD-009", "type": "NTP", "language": "java", "context": "package com.company.erp.am.service;\n\npublic class AssetDepreciationService {\n    @Autowired\n    private ", "completion": "AssetRepository assetRepository;\n    \n    public void calculateDepreciation() {\n        // 折旧计算逻辑\n    }"}
+
+{"id": "MOD-010", "type": "MultiTurn", "messages": [
+    {"role": "user", "content": "需要给PM模块添加设备维护服务"},
+    {"role": "assistant", "content": "请确认：\n1. 包路径com.company.erp.pm.service\n2. 继承BaseService\n3. 包含scheduleMaintenance方法"},
+    {"role": "user", "content": "class DeviceService {\n    void schedule() {}\n}"},
+    {"role": "assistant", "content": "需要修正：\n1. 添加package声明\n2. 类名改为PM_DeviceService\n3. 方法名完整\n完整代码：\npackage com.company.erp.pm.service;\n\npublic class PM_DeviceService extends BaseService {\n    public void scheduleMaintenance() {}\n}"}
+]}
+

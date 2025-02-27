@@ -1,0 +1,81 @@
+{"instruction":"根据规范编写物料管理模块（MM）的采购订单实体类","input":"","output":"package com.company.erp.mm.entity;\n\nimport java.math.BigDecimal;\n\npublic class MM_PurchaseOrder extends AbstractBillEntity {\n    public static final String OID = \"OID\";\n    public static final String DocumentNumber = \"DocumentNumber\";\n    public static final String VendorID = \"VendorID\";\n    public static final String Quantity = \"Quantity\";\n    \n    private Long oid;\n    private String documentNumber;\n    private Long vendorId;\n    private BigDecimal quantity;\n    \n    // 链式setter示例\n    public MM_PurchaseOrder setDocumentNumber(String number) throws Throwable {\n        this.documentNumber = number;\n        return this;\n    }\n}"}
+
+{"instruction":"编写符合规范的采购订单Formula类","input":"","output":"package com.company.erp.mm.purchase.formula;\n\nimport com.company.erp.mm.entity.MM_PurchaseOrder;\nimport com.company.erp.formula.StatusFormula;\n\npublic class PurchaseOrderFormula extends EntityContextAction {\n    \n    public PurchaseOrderFormula(IMidContext context) throws Throwable {\n        super(context);\n    }\n    \n    public void validatePurchaseOrder(MM_PurchaseOrder order) throws Throwable {\n        if (order.getVendorID() == null) {\n            throw new Throwable(\"供应商不能为空\");\n        }\n        if (order.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {\n            throw new Throwable(\"数量必须大于0\");\n        }\n    }\n}"}
+
+{"instruction":"创建销售订单XML配置文件","input":"","output":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<DataObject Key=\"SD_SalesOrder\" PrimaryTableKey=\"ESD_SalesOrderHead\">\n  <TableCollection>\n    <Table Key=\"ESD_SalesOrderHead\" Caption=\"销售订单头表\">\n      <Column Key=\"CustomerID\" DataType=\"Long\" Caption=\"客户\"/>\n      <Column Key=\"NetAmount\" DataType=\"Numeric\" Precision=\"16\" Scale=\"2\" Caption=\"净额\"/>\n    </Table>\n  </TableCollection>\n</DataObject>"}
+
+{"instruction":"编写错误的实体类示例（违反包结构规范）","input":"","output":"package com.company.erp.sd.entity;\n\n// 错误：模块标识应为SD但包名使用小写sd\npublic class SD_SalesOrder {\n    public static final String CustomerID = \"CustomerID\";\n    // 错误：缺少链式setter\n    public void setCustomerID(Long id) {}\n}"}
+
+{"instruction":"实现销售订单状态变更逻辑","input":"","output":"public class SalesOrderFormula extends EntityContextAction {\n    \n    public void changeStatus(SD_SalesOrder order, int newStatus) throws Throwable {\n        StatusFormula statusFormula = new StatusFormula(getMidContext());\n        statusFormula.changeStatus(\n            true,\n            \"SD_SalesOrder\",\n            \"StatusChange\",\n            order.getOID(),\n            (long)newStatus,\n            \"状态变更\"\n        );\n    }\n}"}
+
+{"instruction":"创建违反分层依赖的代码示例","input":"","output":"package com.company.erp.sd.formula;\n\n// 错误：业务层直接调用配置层\nimport com.company.erp.solution.config.*;\n\npublic class SalesFormula {\n    private ConfigService configService; // 违规依赖\n}"}
+
+{"instruction":"编写物料管理的ContextActionRegistry","input":"","output":"package com.company.erp.mm.registry;\n\nimport com.company.erp.mm.purchase.formula.PurchaseOrderFormula;\n\npublic class MMContextActionRegistry implements IExtendContextActionRegistry {\n    @Override\n    public Class<?>[] getContextActions() {\n        return new Class<?>[]{\n            PurchaseOrderFormula.class\n        };\n    }\n}"}
+
+{"instruction":"生成采购订单单元测试（正向案例）","input":"","output":"@ExtendWith(MockitoExtension.class)\npublic class PurchaseOrderFormulaTest {\n    @Mock\n    IMidContext context;\n    \n    @Test\n    void testValidPurchaseOrder() throws Throwable {\n        MM_PurchaseOrder order = new MM_PurchaseOrder()\n            .setVendorID(1001L)\n            .setQuantity(new BigDecimal(\"10.000\"));\n        \n        new PurchaseOrderFormula(context).validatePurchaseOrder(order);\n        assertNotNull(order.getDocumentNumber());\n    }\n}"}
+
+{"instruction":"生成销售订单单元测试（反向案例）","input":"","output":"@Test\nvoid testInvalidSalesOrder() {\n    SD_SalesOrder order = new SD_SalesOrder().setQuantity(BigDecimal.ZERO);\n    \n    Throwable ex = assertThrows(Throwable.class, () -> {\n        new SalesOrderFormula(context).validate(order);\n    });\n    assertEquals(\"数量必须大于0\", ex.getMessage());\n}"}
+
+{"instruction":"实现单据编号生成逻辑","input":"","output":"public class PurchaseOrderFormula extends EntityContextAction {\n    \n    public String generateDocNumber() throws Throwable {\n        return DocumentFunction.generateDocumentNumber(\n            getMidContext(), \n            \"MM\", \n            \"PO\"\n        );\n    }\n}"}
+
+{"instruction":"创建违反表命名规范的XML配置","input":"","output":"<Table Key=\"PurchaseOrderHead\" Caption=\"采购订单头表\">\n  <!-- 错误：缺少模块前缀EMM_ -->\n  <Column Key=\"Vendor\" DataType=\"String\"/>\n</Table>"}
+
+{"instruction":"实现采购订单明细验证逻辑","input":"","output":"private void validateDetails(MM_PurchaseOrder order) throws Throwable {\n    if (order.getDetails().isEmpty()) {\n        throw new Throwable(\"必须包含至少一条明细\");\n    }\n    \n    for (PurchaseOrderDtl dtl : order.getDetails()) {\n        if (dtl.getMaterialID() == null) {\n            throw new Throwable(\"物料不能为空\");\n        }\n    }\n}"}
+
+{"instruction":"编写符合SOLID原则的Formula类","input":"","output":"public class SalesTaxCalculator extends EntityContextAction {\n    \n    public BigDecimal calculateTax(SD_SalesOrder order) {\n        // 单一职责：仅处理税费计算\n        return order.getNetAmount()\n            .multiply(new BigDecimal(\"0.1\"))\n            .setScale(2, RoundingMode.HALF_UP);\n    }\n}"}
+
+{"instruction":"创建违反KISS原则的复杂实现","input":"","output":"public class OverEngineeredFormula {\n    // 错误：过度设计的分层\n    public void processOrder(SD_SalesOrder order) {\n        new ValidationLayer().validate(order);\n        new CalculationLayer().calculate(order);\n        new PersistenceLayer().save(order);\n    }\n}"}
+
+{"instruction":"实现跨模块调用规范示例","input":"","output":"public class SalesOrderFormula extends EntityContextAction {\n    \n    public void linkToFinance(SD_SalesOrder order) throws Throwable {\n        // 正确：通过标准接口调用\n        FI_InvoiceService invoiceService = getContext().getService(FI_InvoiceService.class);\n        invoiceService.createInvoice(order);\n    }\n}"}
+
+{"instruction":"生成物料管理模块的SPI注册文件","input":"","output":"# resources/META-INF/services/com.company.erp.function.IExtendContextActionRegistry\ncom.company.erp.mm.registry.MMContextActionRegistry"}
+
+{"instruction":"编写违反状态管理规范的代码","input":"","output":"public class InvalidStatusHandler {\n    // 错误：直接修改状态字段\n    public void forceComplete(SD_SalesOrder order) {\n        order.status = 99; // 应通过StatusFormula变更\n    }\n}"}
+
+{"instruction":"创建符合YAGNI原则的简单实现","input":"","output":"public class SimpleValidator {\n    // 仅实现当前需要的验证\n    public void validateRequiredFields(SD_SalesOrder order) {\n        if (order.getCustomerID() == null) {\n            throw new IllegalArgumentException(\"客户必须填写\");\n        }\n    }\n}"}
+
+{"instruction":"实现缓存表查询优化","input":"","output":"public class MaterialCache {\n    \n    @Cacheable(value = \"EGMM_Material\")\n    public Material getMaterial(Long id) {\n        return repository.findById(id);\n    }\n}"}
+
+{"instruction":"编写违反日志规范的代码示例","input":"","output":"public class InvalidLogger {\n    public void processOrder(SD_SalesOrder order) {\n        System.out.println(\"Processing order: \" + order.getId()); // 错误：未使用SLF4J\n    }\n}"}
+
+{"instruction":"生成符合异常处理规范的代码","input":"","output":"public class OrderProcessor {\n    \n    public void process(SD_SalesOrder order) throws Throwable {\n        try {\n            validate(order);\n            save(order);\n        } catch (BusinessException e) {\n            logger.error(\"业务处理失败：{}\", e.getMessage(), e);\n            throw new Throwable(\"处理失败: \" + e.getMessage());\n        }\n    }\n}"}
+
+{"instruction":"根据规范创建资产管理模块（AM）的折旧计算实体类","input":"","output":"package com.company.erp.am.entity;\n\nimport java.math.BigDecimal;\n\npublic class AM_Depreciation extends AbstractBillEntity {\n    public static final String AssetID = \"AssetID\";\n    public static final String DepreciationMethod = \"DepreciationMethod\";\n    public static final String AnnualRate = \"AnnualRate\";\n    \n    private Long assetId;\n    private String method;\n    private BigDecimal rate;\n    \n    public AM_Depreciation setAssetId(Long id) throws Throwable {\n        this.assetId = id;\n        return this;\n    }\n}"}
+
+{"instruction":"编写符合规范的采购订单状态机实现","input":"","output":"public class PurchaseOrderStatusFormula extends EntityContextAction {\n    \n    public void approve(MM_PurchaseOrder order) throws Throwable {\n        validateApprovalConditions(order);\n        StatusFormula status = new StatusFormula(getMidContext());\n        status.changeStatus(true, \"MM_PurchaseOrder\", \"APPROVE\", \n            order.getOID(), 3L, \"最终审批通过\");\n    }\n    \n    private void validateApprovalConditions(MM_PurchaseOrder order) throws Throwable {\n        if (order.getTotalAmount().compareTo(new BigDecimal(\"100000\")) > 0) {\n            throw new Throwable(\"超过单笔采购限额\");\n        }\n    }\n}"}
+
+{"instruction":"创建违反分层架构的代码示例","input":"","output":"package com.company.erp.sd.formula;\n\n// 错误：业务层直接依赖解决方案层\nimport com.company.erp.solution.config.SalesConfig;\n\npublic class InvalidDependencyExample {\n    private SalesConfig config; // 违规跨层依赖\n}"}
+
+{"instruction":"实现销售订单明细金额计算逻辑","input":"","output":"public class SalesOrderCalculator extends EntityContextAction {\n    \n    public BigDecimal calculateLineTotal(SD_SalesOrderDtl dtl) {\n        return dtl.getQuantity()\n            .multiply(dtl.getPrice())\n            .setScale(2, RoundingMode.HALF_UP);\n    }\n    \n    public void updateOrderTotal(SD_SalesOrder order) throws Throwable {\n        BigDecimal total = order.getDetails().stream()\n            .map(this::calculateLineTotal)\n            .reduce(BigDecimal.ZERO, BigDecimal::add);\n        order.setTotalAmount(total);\n    }\n}"}
+
+{"instruction":"生成物料主数据XML配置（正确案例）","input":"","output":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<DataObject Key=\"MM_Material\" PrimaryTableKey=\"EMM_MaterialMaster\">\n  <TableCollection>\n    <Table Key=\"EMM_MaterialMaster\" Caption=\"物料主数据\">\n      <Column Key=\"MaterialCode\" DataType=\"Varchar\" Length=\"20\" Caption=\"物料编码\"/>\n      <Column Key=\"BaseUnit\" DataType=\"Long\" Caption=\"基本单位\"/>\n    </Table>\n  </TableCollection>\n</DataObject>"}
+
+{"instruction":"编写错误的Formula类继承实现","input":"","output":"// 错误：未继承EntityContextAction\npublic class InvalidFormula {\n    public void saveOrder(SD_SalesOrder order) {\n        // 缺少上下文处理\n    }\n}"}
+
+{"instruction":"实现符合DRY原则的通用验证器","input":"","output":"public abstract class BaseValidator<T> extends EntityContextAction {\n    \n    public void validateRequired(T entity, String fieldName, Object value) throws Throwable {\n        if (value == null || (value instanceof String && ((String)value).isEmpty())) {\n            throw new Throwable(fieldName + \"不能为空\");\n        }\n    }\n}\n\npublic class SalesOrderValidator extends BaseValidator<SD_SalesOrder> {\n    public void validate(SD_SalesOrder order) throws Throwable {\n        validateRequired(order, \"客户\", order.getCustomerID());\n    }\n}"}
+
+{"instruction":"创建包含系统字段的实体类","input":"","output":"public class FI_AccountingDocument extends AbstractBillEntity {\n    public static final String Creator = \"Creator\";\n    public static final String CreateTime = \"CreateTime\";\n    \n    private Long creator;\n    private LocalDateTime createTime;\n    \n    // 符合规范的链式方法\n    public FI_AccountingDocument setCreator(Long userId) throws Throwable {\n        this.creator = userId;\n        return this;\n    }\n}"}
+
+{"instruction":"生成反向案例：违反包命名规范","input":"","output":"package com.company.erp.FI.entity; // 错误：模块标识应为小写\n\npublic class FinancialDocument {\n    // 类实现...\n}"}
+
+{"instruction":"实现多币种金额转换工具类","input":"","output":"public class CurrencyConverter extends EntityContextAction {\n    \n    @Cacheable(\"EGS_ExchangeRate\")\n    public BigDecimal convertAmount(BigDecimal amount, String from, String to) {\n        ExchangeRate rate = getExchangeRate(from, to);\n        return amount.multiply(rate.getRate()).setScale(2);\n    }\n}"}
+
+{"instruction":"编写符合日志规范的异常处理","input":"","output":"public class OrderProcessor extends EntityContextAction {\n    private static final Logger logger = LoggerFactory.getLogger(OrderProcessor.class);\n    \n    public void process(SD_SalesOrder order) throws Throwable {\n        try {\n            validate(order);\n            save(order);\n        } catch (BusinessException e) {\n            logger.error(\"订单处理失败 [单据号:{}]\", order.getDocumentNumber(), e);\n            throw new Throwable(\"处理失败：\" + e.getMessage());\n        }\n    }\n}"}
+
+{"instruction":"创建违反SOLID原则的上帝类","input":"","output":"public class GodClass {\n    // 违反单一职责原则\n    public void processOrder(SD_SalesOrder order) {\n        validate(order);\n        calculate(order);\n        save(order);\n        sendNotification(order);\n    }\n}"}
+
+{"instruction":"生成物料分类缓存表配置","input":"","output":"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<DataObject Key=\"MM_MaterialClass\" PrimaryTableKey=\"EGMM_MaterialClass\">\n  <TableCollection>\n    <Table Key=\"EGMM_MaterialClass\" Caption=\"物料分类缓存\">\n      <Column Key=\"ClassCode\" DataType=\"Varchar\" Length=\"10\" Caption=\"分类代码\"/>\n      <Column Key=\"ClassName\" DataType=\"Varchar\" Length=\"50\" Caption=\"分类名称\"/>\n    </Table>\n  </TableCollection>\n</DataObject>"}
+
+{"instruction":"实现符合KISS原则的状态检查","input":"","output":"public class SimpleStatusChecker {\n    public boolean isApprovable(int status) {\n        return status == 1; // 简单明确的状态判断\n    }\n}"}
+
+{"instruction":"编写违反接口隔离原则的示例","input":"","output":"public interface OversizedInterface {\n    void saveOrder(SD_SalesOrder order);\n    void calculateTax(SD_SalesOrder order);\n    void printDocument(SD_SalesOrder order); // 违反ISP原则\n}"}
+
+{"instruction":"生成跨模块服务调用规范示例","input":"","output":"public class SalesToFinanceBridge {\n    \n    public FI_Invoice createInvoice(SD_SalesOrder order) throws Throwable {\n        FI_InvoiceService invoiceService = Context.getService(FI_InvoiceService.class);\n        return invoiceService.createFromSalesOrder(order.getOID());\n    }\n}"}
+
+{"instruction":"创建反向案例：错误的状态变更方式","input":"","output":"public class InvalidStatusUpdate {\n    public void forceComplete(SD_SalesOrder order) {\n        order.setStatus(99); // 错误：未通过StatusFormula\n    }\n}"}
+
+{"instruction":"实现配置层XML模板继承机制","input":"","output":"<Form Key=\"SD_OrderBase\" Abstract=\"true\">\n  <DataSource RefObjectKey=\"SD_SalesOrder\"/>\n  <OperationCollection>\n    <Operation Key=\"BaseSave\" Caption=\"保存\"/>\n  </OperationCollection>\n</Form>\n\n<Form Key=\"SD_SpecialOrder\" ParentKey=\"SD_OrderBase\">\n  <Body>\n    <!-- 继承基础配置并扩展 -->\n  </Body>\n</Form>"}
+
+{"instruction":"生成符合YAGNI原则的简单查询","input":"","output":"public class SimpleMaterialQuery {\n    public Material getBasicInfo(Long id) {\n        return repository.findBasicById(id);\n    }\n}"}
+
+{"instruction":"编写违反版本控制的实体修改","input":"","output":"public class AM_Depreciation {\n    // 错误：直接删除已发布字段\n    // public static final String DepreciationMethod = \"...\"; \n    public static final String NewCalculationMethod = \"...\";\n}"}
