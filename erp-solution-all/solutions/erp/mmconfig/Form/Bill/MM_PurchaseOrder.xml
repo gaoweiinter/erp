@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Form Key="MM_PurchaseOrder" Caption="采购订单" FormType="Entity" >
+    <DataSource RefObjectKey="MM_PurchaseOrder" />
+    <OperationCollection>
+        <Operation Key="BillSave" Caption="保存" >
+            <Action>
+                <![CDATA[Macro_Save;]]>
+            </Action>        
+        </Operation>
+        <Operation Key="BillCancel" Caption="取消" RefKey="BillCancel" >
+            <Action>
+                <![CDATA[]]>
+            </Action>        
+        </Operation>
+    </OperationCollection>
+    <Body PopHeight="100%" PopWidth="95%">
+        <Block>
+            <FlexFlowLayoutPanel Key="Root">
+                <ToolBar Key="ToolBar1" Height="100%" Caption="ToolBar">
+                    <ToolBarItemCollection/>
+                </ToolBar>
+                <SplitPanel Key="main_container" Orientation="Vertical" Height="100%">
+                    <TabPanel Caption="支付处理" Key="PaymentProcessing">
+                        <GridLayoutPanel Key="TAB19" OverflowY="Auto" Padding="8px" Caption="机构数据" Visible="true">
+                            <Label Key="Inner_CompanyCodeID" Caption="公司代码" X="4" Y="1" />
+                            <Dict Key="CompanyCodeID"  Caption="公司代码" BuddyKey="Inner_CompanyCodeID" X="5" Y="1" Visible="true" Enable="true" ItemKey="CompanyCode">
+                                <DataBinding TableKey="EMM_PurchaseOrderHead" ColumnKey="CompanyCodeID" Required="true"/>
+                                <ItemFilter ItemKey="CompanyCode">
+                                   
+                                </ItemFilter>
+                            </Dict>
+
+                            <Label Key="Inner_DocumentNumber" Caption="单据编号" X="2" Y="0" />
+                            <TextEditor Key="DocumentNumber"  Caption="单据编号" BuddyKey="Inner_DocumentNumber" X="3" Y="0" Visible="true" Enable="true" >
+                                <DataBinding TableKey="EMM_PurchaseOrderHead" ColumnKey="DocumentNumber" Required="true"/>
+                            </TextEditor>
+
+                            <Label Key="Inner_VendorID" Caption="供应商" X="0" Y="2" />
+                            <Dict Key="VendorID"  Caption="供应商" BuddyKey="Inner_VendorID" X="1" Y="2" Visible="true" Enable="true" >
+                                <DataBinding TableKey="EMM_PurchaseOrderHead" ColumnKey="VendorID" Required="true"/>
+                                <ItemFilter ItemKey="CompanyCode">
+                                   
+                                </ItemFilter>
+                            </Dict>
+
+
+                        </GridLayoutPanel>
+                    </TabPanel>
+                    <SplitPanel Key="DetailedTable" Orientation="Vertical">
+                        <Grid Key="grid0">
+                            <GridColumnCollection>
+                                <GridColumn Key="MaterialBillDtlID" Caption="MaterialBillDtlID" Visible="true" Width="80px" />
+                                <GridColumn Key="RowNo" Caption="行号" Visible="true" Width="50px" />
+                                <GridColumn Key="PlantID" Caption="工厂" Visible="true" Width="150px" />
+                                <GridColumn Key="MaterialID" Caption="物料" Visible="true" Width="140px" />
+                                <GridColumn Key="ShortText" Caption="短文本" Visible="true" Width="400px" />
+                                
+                                <GridColumn Key="Quantity" Caption="订单数量" Visible="true" Width="160px" />
+                                <GridColumn Key="UnitID" Caption="订单单位" Visible="true" Width="80px" />
+                                <GridColumn Key="Price" Caption="单价" Visible="true" Width="80px" />
+                                <GridColumn Key="PriceCurrencyID" Caption="货币" Visible="true" Width="80px" />
+                                <GridColumn Key="NetAmount" Caption="订单金额" Visible="true" Width="80px" />
+                            </GridColumnCollection>
+                            <GridRowCollection>
+                                <GridRow Key="RowIngrid0" TableKey="EMM_PurchaseOrderDtl">
+                                    <GridCell Key="MaterialBillDtlID" Caption="MaterialBillDtlID" CellType="NumberEditor" Scale="0">
+                                        <DataBinding ColmnKey="OID" />
+                                    </GridCell>
+                                    <GridCell Key="RowNo" Caption="行号" CellType="NumberEditor" Scale="0">
+                                        <DataBinding ColmnKey="Sequence" />
+                                    </GridCell>
+                                    <GridCell Key="PlantID" Caption="工厂" CellType="Dict" ItemKey="Plant">
+                                        <DataBinding ColmnKey="PlantID" />
+                                    </GridCell>
+                                    <GridCell Key="MaterialID" Caption="物料" CellType="Dict" ItemKey="Plant">
+                                        <DataBinding ColmnKey="MaterialID" />
+                                    </GridCell>
+                                    <GridCell Key="ShortText" Caption="短文本" CellType="TextEditor" ItemKey="Plant">
+                                        <DataBinding ColmnKey="ShortText" />
+                                    </GridCell>
+                                    <GridCell Key="Quantity" Caption="订单数量" CellType="NumberEditor">
+                                        <DataBinding ColmnKey="Quantity" />
+                                    </GridCell>
+                                    <GridCell Key="UnitID" Caption="订单单位" CellType="Dict" ItemKey="Unit">
+                                        <DataBinding ColmnKey="UnitID" />
+                                    </GridCell>
+                                    <GridCell Key="Price" Caption="单价" CellType="NumberEditor">
+                                        <DataBinding ColmnKey="Price" />
+                                    </GridCell>
+                                    <GridCell Key="PriceCurrencyID" Caption="货币" CellType="Dict" ItemKey="Currency">
+                                        <DataBinding ColmnKey="PriceCurrencyID" />
+                                    </GridCell>
+                                    <GridCell Key="NetAmount" Caption="订单金额" CellType="NumberEditor">
+                                        <DataBinding ColmnKey="NetAmount" />
+                                        <CellFormat HAlign="Right"/>
+                                    </GridCell>
+                                </GridRow>
+                            </GridRowCollection>
+                        </Grid>
+                    </SplitPanel>
+                </SplitPanel>
+            </FlexFlowLayoutPanel>
+        </Block>
+        <OnLoad>
+            <![CDATA['' ]]>
+        </OnLoad>
+    </Body>
+    <MacroCollection>
+        <Macro Key="Macro_Save">
+            <![CDATA[com.company.erp.mm.purchase.formula.PurchaseOrderFormula.save(); ]]>
+        </Macro>
+    </MacroCollection>
+</Form>

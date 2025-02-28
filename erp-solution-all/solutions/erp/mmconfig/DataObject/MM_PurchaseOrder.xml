@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<DataObject Key="MM_PurchaseOrder" Caption="采购订单" PrimaryTableKey="EMM_PurchaseOrderHead" PrimaryType="Entity" Version="1">
+    <TableCollection>
+        <Table Key="EMM_PurchaseOrderHead" Caption="采购订单头表" IndexPrefix="EMM_PurchaseOrderHead">
+            <!-- 系统字段 -->
+            <Column Key="OID" Caption="对象标识" DataType="Long" />
+            <Column Key="SOID" Caption="主对象标识" DataType="Long" />
+            <Column Key="POID" Caption="父对象标识" DataType="Long" />
+            <!--<Column Key="VERID" Caption="对象版本" DataType="Integer" />
+            <Column Key="DVERID" Caption="对象明细版本" DataType="Integer" />
+            <Column Key="Status" Caption="状态" DataType="Integer" />
+            <Column Key="Notes" Caption="备注" DataType="Varchar" Length="2000" DefaultValue="" />
+            <Column Key="Creator" Caption="制单人" DataType="Long" />
+            <Column Key="CreateTime" Caption="制单时间" DataType="DateTime" />
+            <Column Key="Modifier" Caption="修改人" DataType="Long" />
+            <Column Key="ModifyTime" Caption="修改时间" DataType="DateTime" />
+            <Column Key="ClientID" Caption="集团" DataType="Long" />-->
+
+            <!-- 业务字段 -->
+            <Column Key="DocumentNumber" Caption="单据编号" DataType="Varchar" Length="50" DefaultValue=""/>
+            <Column Key="VendorID" Caption="供应商" DataType="Long" />
+            <Column Key="CurrencyID" Caption="货币" DataType="Long" />
+        </Table>
+        <Table Key="EMM_PurchaseOrderDtl" TableMode="Detail" Caption="采购订单物料明细" IndexPrefix="EMM_PurchaseOrderDtl">
+            <!-- 系统字段 -->
+            <Column Key="OID" Caption="对象标识" DataType="Long" />
+            <Column Key="SOID" Caption="主对象标识" DataType="Long" />
+            <Column Key="POID" Caption="父对象标识" DataType="Long" />
+            <!--<Column Key="VERID" Caption="对象版本" DataType="Integer" />
+            <Column Key="DVERID" Caption="对象明细版本" DataType="Integer" />
+            <Column Key="ClientID" Caption="集团" DataType="Long" />-->
+            
+            <!-- 业务字段 -->
+            <Column Key="MaterialID" Caption="物料" DataType="Long" />
+            <Column Key="ShortText" Caption="短文本" DataType="Varchar" Length="100" DefaultValue="" />
+            <Column Key="PlantID" Caption="工厂" DataType="Long" />
+            <Column Key="PriceQuantity" Caption="价格数量" DataType="Numeric" Precision="16" Scale="3" />
+            <Column Key="Price" Caption="单价" DataType="Numeric" Precision="16" Scale="2"/>
+            <Column Key="PriceUnitID" Caption="价格单位" DataType="Long" />
+            <Column Key="Quantity" Caption="订单数量" DataType="Numeric" Precision="16" Scale="3" />
+            <Column Key="UnitID" Caption="订单单位" DataType="Long" />
+            <Column Key="NetAmount" Caption="订单金额" DataType="Numeric" Precision="16" Scale="2" />
+            <Column Key="TaxAmount" Caption="税额" DataType="Numeric" Precision="16" Scale="2" />            
+            <Column Key="Sequence" Caption="序号" DataType="Integer"/>            
+        </Table>
+    </TableCollection>
+</DataObject>

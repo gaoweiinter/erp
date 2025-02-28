@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Form Key="SD_SalesOrder" Caption="销售订单" FormType="Entity">
+    <DataSource RefObjectKey="SD_SalesOrder" />
+    <OperationCollection>
+        <Operation Key="BillSave" Caption="保存">
+            <Action>
+                <![CDATA[Macro_Save;]]>
+            </Action>
+        </Operation>
+        <Operation Key="BillCancel" Caption="取消" RefKey="BillCancel">
+            <Action>
+                <![CDATA[]]>
+            </Action>
+        </Operation>
+    </OperationCollection>
+    <Body PopHeight="100%" PopWidth="95%">
+        <Block>
+            <FlexFlowLayoutPanel Key="Root">
+                <ToolBar Key="ToolBar1" Height="100%" Caption="ToolBar">
+                    <ToolBarItemCollection/>
+                </ToolBar>
+                <SplitPanel Key="main_container" Orientation="Vertical" Height="100%">
+                    <TabPanel Caption="基本信息" Key="BasicInfo">
+                        <GridLayoutPanel Key="TAB1" OverflowY="Auto" Padding="8px" Caption="基本信息" Visible="true">
+                            <Label Key="Inner_DocumentNumber" Caption="单据编号" X="0" Y="0" />
+                            <TextEditor Key="DocumentNumber" Caption="单据编号" BuddyKey="Inner_DocumentNumber" X="1" Y="0" Visible="true" Enable="false">
+                                <DataBinding TableKey="ESD_SalesOrderHead" ColumnKey="DocumentNumber" Required="true"/>
+                            </TextEditor>
+
+                            <Label Key="Inner_CustomerID" Caption="客户" X="0" Y="1" />
+                            <Dict Key="CustomerID" Caption="客户" BuddyKey="Inner_CustomerID" X="1" Y="1" Visible="true" Enable="true" ItemKey="Customer">
+                                <DataBinding TableKey="ESD_SalesOrderHead" ColumnKey="CustomerID" Required="true"/>
+                            </Dict>
+
+                            <Label Key="Inner_CurrencyID" Caption="币种" X="2" Y="1" />
+                            <Dict Key="CurrencyID" Caption="币种" BuddyKey="Inner_CurrencyID" X="3" Y="1" Visible="true" Enable="true" ItemKey="Currency">
+                                <DataBinding TableKey="ESD_SalesOrderHead" ColumnKey="CurrencyID" Required="true"/>
+                            </Dict>
+                        </GridLayoutPanel>
+                    </TabPanel>
+                    <SplitPanel Key="DetailedTable" Orientation="Vertical">
+                        <Grid Key="grid0">
+                            <GridColumnCollection>
+                                <GridColumn Key="Sequence" Caption="行号" Visible="true" Width="50px" />
+                                <GridColumn Key="MaterialID" Caption="物料" Visible="true" Width="140px" />
+                                <GridColumn Key="ShortText" Caption="短文本" Visible="true" Width="400px" />
+                                <GridColumn Key="Quantity" Caption="数量" Visible="true" Width="160px" />
+                                <GridColumn Key="UnitID" Caption="单位" Visible="true" Width="80px" />
+                                <GridColumn Key="Price" Caption="单价" Visible="true" Width="80px" />
+                                <GridColumn Key="NetAmount" Caption="金额" Visible="true" Width="80px" />
+                            </GridColumnCollection>
+                            <GridRowCollection>
+                                <GridRow Key="RowIngrid0" TableKey="ESD_SalesOrderDtl">
+                                    <GridCell Key="Sequence" Caption="行号" CellType="NumberEditor" Scale="0">
+                                        <DataBinding ColmnKey="Sequence" />
+                                    </GridCell>
+                                    <GridCell Key="MaterialID" Caption="物料" CellType="Dict" ItemKey="Material">
+                                        <DataBinding ColmnKey="MaterialID" />
+                                    </GridCell>
+                                    <GridCell Key="ShortText" Caption="短文本" CellType="TextEditor">
+                                        <DataBinding ColmnKey="ShortText" />
+                                    </GridCell>
+                                    <GridCell Key="Quantity" Caption="数量" CellType="NumberEditor" Scale="3">
+                                        <DataBinding ColmnKey="Quantity" />
+                                    </GridCell>
+                                    <GridCell Key="UnitID" Caption="单位" CellType="Dict" ItemKey="Unit">
+                                        <DataBinding ColmnKey="UnitID" />
+                                    </GridCell>
+                                    <GridCell Key="Price" Caption="单价" CellType="NumberEditor" Scale="2">
+                                        <DataBinding ColmnKey="Price" />
+                                    </GridCell>
+                                    <GridCell Key="NetAmount" Caption="金额" CellType="NumberEditor" Scale="2">
+                                        <DataBinding ColmnKey="NetAmount" />
+                                        <CellFormat HAlign="Right"/>
+                                    </GridCell>
+                                </GridRow>
+                            </GridRowCollection>
+                        </Grid>
+                    </SplitPanel>
+                </SplitPanel>
+            </FlexFlowLayoutPanel>
+        </Block>
+        <OnLoad>
+            <![CDATA['' ]]>
+        </OnLoad>
+    </Body>
+    <MacroCollection>
+        <Macro Key="Macro_Save">
+            <![CDATA[com.company.erp.sd.sales.formula.SalesOrderFormula.save(); ]]>
+        </Macro>
+    </MacroCollection>
+</Form> 

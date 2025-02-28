@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<DataObject Key="SD_SalesInvoice" Caption="销售发票" PrimaryTableKey="ESD_SalesInvoiceHead" PrimaryType="Entity" Version="1">
+    <TableCollection>
+        <Table Key="ESD_SalesInvoiceHead" Caption="销售发票头表" IndexPrefix="ESD_SalesInvoiceHead">
+            <!-- 系统字段 -->
+            <Column Key="OID" Caption="对象标识" DataType="Long" />
+            <Column Key="SOID" Caption="主对象标识" DataType="Long" />
+            <Column Key="POID" Caption="父对象标识" DataType="Long" />
+            <Column Key="VERID" Caption="对象版本" DataType="Integer" />
+            <Column Key="Status" Caption="状态" DataType="Integer" />
+            <Column Key="Creator" Caption="制单人" DataType="Long" />
+            <Column Key="CreateTime" Caption="制单时间" DataType="DateTime" />
+            <Column Key="Modifier" Caption="修改人" DataType="Long" />
+            <Column Key="ModifyTime" Caption="修改时间" DataType="DateTime" />
+            
+            <!-- 业务字段 -->
+            <Column Key="DocumentNumber" Caption="单据编号" DataType="Varchar" Length="50" DefaultValue=""/>
+            <Column Key="SalesOrderNumber" Caption="销售订单编号" DataType="Varchar" Length="50" DefaultValue=""/>
+        </Table>
+    </TableCollection>
+</DataObject> 

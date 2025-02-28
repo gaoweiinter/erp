@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Form Key="SD_SalesInvoice" Caption="销售发票" FormType="Entity">
+    <DataSource RefObjectKey="SD_SalesInvoice" />
+    <OperationCollection>
+        <Operation Key="BillSave" Caption="保存">
+            <Action>
+                <![CDATA[Macro_Save;]]>
+            </Action>
+        </Operation>
+        <Operation Key="BillCancel" Caption="取消">
+            <Action>
+                <![CDATA[Macro_Cancel;]]>
+            </Action>
+        </Operation>
+    </OperationCollection>
+    <Body PopHeight="100%" PopWidth="95%">
+        <Block>
+            <FlexFlowLayoutPanel Key="Root">
+                <ToolBar Key="ToolBar1" Height="100%" Caption="ToolBar">
+                    <ToolBarItemCollection/>
+                </ToolBar>
+                <SplitPanel Key="main_container" Orientation="Vertical" Height="100%">
+                    <TabPanel Caption="基本信息" Key="BasicInfo">
+                        <GridLayoutPanel Key="TAB1" OverflowY="Auto" Padding="8px" Caption="基本信息" Visible="true">
+                            <Label Key="Inner_DocumentNumber" Caption="单据编号" X="0" Y="0" />
+                            <TextEditor Key="DocumentNumber" Caption="单据编号" BuddyKey="Inner_DocumentNumber" X="1" Y="0" Visible="true" Enable="false">
+                                <DataBinding TableKey="ESD_SalesInvoiceHead" ColumnKey="DocumentNumber" Required="true"/>
+                            </TextEditor>
+
+                            <Label Key="Inner_SalesOrderNumber" Caption="销售订单编号" X="0" Y="1" />
+                            <TextEditor Key="SalesOrderNumber" Caption="销售订单编号" BuddyKey="Inner_SalesOrderNumber" X="1" Y="1" Visible="true" Enable="true">
+                                <DataBinding TableKey="ESD_SalesInvoiceHead" ColumnKey="SalesOrderNumber" Required="true"/>
+                            </TextEditor>
+                        </GridLayoutPanel>
+                    </TabPanel>
+                </SplitPanel>
+            </FlexFlowLayoutPanel>
+        </Block>
+        <OnLoad>
+            <![CDATA['' ]]>
+        </OnLoad>
+    </Body>
+    <MacroCollection>
+        <Macro Key="Macro_Save">
+            <![CDATA[com.company.erp.sd.invoice.formula.SalesInvoiceFormula.save(); ]]>
+        </Macro>
+        <Macro Key="Macro_Cancel">
+            <![CDATA[com.company.erp.sd.invoice.formula.SalesInvoiceFormula.cancel(); ]]>
+        </Macro>
+    </MacroCollection>
+</Form> 
