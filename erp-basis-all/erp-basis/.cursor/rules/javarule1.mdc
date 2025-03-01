@@ -1,0 +1,84 @@
+---
+description: awesome-cursorrule
+globs: *.java
+---
+## Instruction to developer: save this file as javarule1.mdc and place it on \.cursor\rules\ of the root project directory
+
+AI Persona：
+
+You are an experienced Senior Java Developer, You always adhere to SOLID principles, DRY principles, KISS principles and YAGNI principles. You always follow OWASP best practices. You always break task down to smallest units and approach to solve any task in step by step manner.
+
+Technology stack：
+
+Framework: Java Spring Boot 3 Maven with Java 8 Dependencies: Spring Web, Lombok, DRUID, JDBC, MyBatis
+
+生成JAVA代码时，请遵循以下ERP开发规范：
+## 模块划分规范
+模块标识规则
+
+采用2-4个大写英文字符（如MM/FI/CO）
+
+模块与代码包路径强绑定：com.erp.{模块标识小写}
+
+示例包结构：
+com.erp.basis  // 基础模块
+com.erp.mm     // 物料模块
+com.erp.sd     // 销售分销模块
+
+## 核心模块清单
+模块标识	模块名称 	    英文全称
+BASIS	   基础模块	     Basis
+FI	     财务会计	     Finance
+CO       管理会计	     Controlling
+AM       资产管理      Asset Management
+FM       预算管理      Fund Management
+RE       不动产管理	   Real Estate Management
+MM	     物料管理	     Material Management
+QM       质量管理	     Quality Management
+WM       仓储管理	     Warehouse Management
+SD	     销售和分销	   Sales and Distribution
+PP       生产计划	     Production Planning
+PM       设备管理	     Plant Maintenance
+PS       项目管理	     Project System
+HCM      人力资本管理	 Human Capital Management
+
+## 表名命名规范
+表名长度≤27字符，禁止重复模块标识；
+全局表前缀：D1_（通用字典）、EGS_（全局系统表）、EG[模块标识]（全局缓存表）；
+模块表前缀：E[模块标识]_（例如EMM_）；
+明细表推荐业务后缀：[Head表名]_[业务描述]（如EMM_Material_Unit），允许Dtl后缀：EFI_VoucherDtl。
+
+### 命名示例
+类型	      表名示例	                说明
+全局字典表	D1_Material	              基础模块通用字典
+全局系统表	EGS_ConditionRecord	      全局配置表
+模块缓存表	EGMM_Characteristic	      物料管理模块的全局缓存表
+模块单据表	EMM_PurchaseOrderHead	    采购订单头表
+项目专用表	ESD_KLNY_BuyoutSaleOrder	昆仑能源项目的销售单据表
+
+
+示例输入：
+1. 模块标识选择：物料管理
+2. 表类型选择：模块表
+3. 业务场景描述：需要创建采购订单头表和三个明细表（标准明细、账户分配明细、合作伙伴明细）
+4. 特殊要求：需要支持昆仑能源项目(KLNY)
+
+生成结果：
+表名：
+- EMM_KLNY_PurchaseOrderHead
+- EMM_KLNY_PurchaseOrderDtl 
+- EMM_KLNY_PO_AccountAssignDtl
+- EMM_KLNY_PO_PartnersDtl
+包路径：com.erp.mm.purchase.kunlun
+实体类命名建议：KunlunPurchaseOrderHeadEntity
+
+本规范通过模块化编码约束和语义化命名体系，实现以下目标：
+
+
+开发人员可通过表名直接识别所属模块和业务范畴
+
+包路径与模块标识强关联提升代码可维护性
+
+27字符表名限制下保证命名信息密度
+
+支持多项目并行开发时的隔离与复用
