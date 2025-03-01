@@ -42,10 +42,10 @@
     </Body>
     <MacroCollection>
         <Macro Key="Macro_Save">
-            <![CDATA[com.company.erp.sd.invoice.formula.SalesInvoiceFormula.save(); ]]>
+            <![CDATA[com.company.erp.sd.formula.SalesInvoiceFormula.save(); ]]>
         </Macro>
         <Macro Key="Macro_Cancel">
-            <![CDATA[com.company.erp.sd.invoice.formula.SalesInvoiceFormula.cancel(); ]]>
+            <![CDATA[com.company.erp.sd.formula.SalesInvoiceFormula.cancel(); ]]>
         </Macro>
     </MacroCollection>
 </Form> 

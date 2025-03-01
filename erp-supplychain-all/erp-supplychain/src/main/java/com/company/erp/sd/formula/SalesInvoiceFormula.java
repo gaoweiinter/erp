@@ -1,4 +1,4 @@
-package com.company.erp.sd.invoice.formula;
+package com.company.erp.sd.formula;
 
 import com.company.erp.entity.SD_SalesInvoice;
 import com.company.erp.formula.StatusFormula;

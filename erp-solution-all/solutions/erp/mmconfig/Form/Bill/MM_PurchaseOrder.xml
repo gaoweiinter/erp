@@ -9,7 +9,7 @@
         </Operation>
         <Operation Key="BillCancel" Caption="取消" RefKey="BillCancel" >
             <Action>
-                <![CDATA[]]>
+                <![CDATA[Macro_Cancel;]]>
             </Action>        
         </Operation>
     </OperationCollection>
@@ -107,7 +107,7 @@
     </Body>
     <MacroCollection>
         <Macro Key="Macro_Save">
-            <![CDATA[com.company.erp.mm.purchase.formula.PurchaseOrderFormula.save(); ]]>
+            <![CDATA[com.company.erp.mm.formula.PurchaseOrderFormula.save(); ]]>
         </Macro>
     </MacroCollection>
 </Form>

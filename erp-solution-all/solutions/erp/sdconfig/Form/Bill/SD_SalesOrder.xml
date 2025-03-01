@@ -86,7 +86,7 @@
     </Body>
     <MacroCollection>
         <Macro Key="Macro_Save">
-            <![CDATA[com.company.erp.sd.sales.formula.SalesOrderFormula.save(); ]]>
+            <![CDATA[com.company.erp.sd.formula.SalesOrderFormula.save(); ]]>
         </Macro>
     </MacroCollection>
 </Form> 

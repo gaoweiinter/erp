@@ -1,4 +1,4 @@
-package com.company.erp.sd.sales.formula;
+package com.company.erp.sd.formula;
 
 import com.company.erp.entity.SD_SalesOrder;
 import com.company.erp.formula.StatusFormula;
